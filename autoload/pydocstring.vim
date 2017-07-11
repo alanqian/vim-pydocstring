@@ -153,6 +153,7 @@ function! s:builddocstring(strs, indent, nested_indent)
   if match(lines, '\c{{_returnType_}}') != -1
     let has_return_type = 1
   endif
+  echo a:indent
   for line in lines
     if line =~ '{{_header_}}'
       let header = substitute(line, '{{_header_}}', prefix, '')
@@ -166,31 +167,7 @@ function! s:builddocstring(strs, indent, nested_indent)
             continue
           endif
           let template = line
-          let typed = 0
-          if match(arg, ':') != -1
-            let argTemplate = join(s:readtmpl('arg'), '')
-            let argParts = split(arg, ':')
-            let argTemplate = substitute(argTemplate, '{{_name_}}', argParts[0], 'g')
-            let arg = substitute(argTemplate, '{{_type_}}', argParts[1], 'g')
-            let typed = 1
-          endif
           let template = substitute(template, '{{_args_}}', arg, 'g')
-          if typed == 1
-            " Fix following bugs.
-            "   `def foo(arg: str):` generates like followings
-            "   ```
-            "   :param arg:
-            "   :type arg: str:
-            "   ```
-            " Template file describes as followings
-            "   ```
-            "   '''
-            "   {{_header_}}
-            "   :param {{_args_}}:
-            "   :rtype: {{_returnType_}}
-            "   '''
-            let template = substitute(template, ':$', '', 'g')
-          endif
           let template = substitute(template, '{{_lf_}}', '\n', 'g')
           let template = substitute(template, '{{_indent_}}', a:indent, 'g')
           let template = substitute(template, '{{_nested_indent_}}', a:nested_indent, 'g')
@@ -205,13 +182,16 @@ function! s:builddocstring(strs, indent, nested_indent)
       let arg = substitute(line, '{{_indent_}}', a:indent, 'g')
       call add(docstrings, arg)
     elseif line =~ '{{_returnType_}}'
-      if strlen(returnType) != 0
-        let rt = substitute(line, '{{_returnType_}}', returnType, '')
+      let rt = substitute(line, '{{_returnType_}}', returnType, '')
+      let rt = substitute(rt, ' *$', '', '')
+      if strlen(rt) != 0
         call add(docstrings, a:indent . rt)
       else
         call remove(docstrings, -1)
       endif
     elseif line == '"""' || line == "'''"
+      call add(docstrings, a:indent . line)
+    elseif len(line) > 0
       call add(docstrings, a:indent . line)
     else
       call add(docstrings, line)

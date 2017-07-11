@@ -1,4 +1,10 @@
-"""{{_header_}}
-:param {{_args_}}:
-:rtype: {{_returnType_}}
+"""
+{{_header_}}
+Args:
+    {{_args_}}:
+Returns: {{_returnType_}}
+    Describe what is returned here.
+
+Raises:
+    KeyError: Raises an exception.
 """
